@@ -20,8 +20,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(OpenCV REQUIRED)
 
-add_executable(CameraNode src/CameraNode.cpp)
+include_directories(include)
+
+add_library(CameraNode src/CameraNode.cpp)
 target_include_directories(CameraNode PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -30,9 +33,16 @@ ament_target_dependencies(
   "rclcpp"
   "sensor_msgs"
   "image_transport"
+  "OpenCV"
 )
-
 install(TARGETS CameraNode
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
+
+add_executable(camera_node src/camera_node.cpp)
+target_link_libraries(camera_node CameraNode)
+install(TARGETS camera_node
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
