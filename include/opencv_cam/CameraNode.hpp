@@ -17,6 +17,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include <opencv2/videoio.hpp>
+#include <image_transport/image_transport.h>
 
 
 // Node which captures images from a camera using OpenCV and publishes them.
@@ -25,7 +26,7 @@ class CameraNode : public rclcpp::Node
 {
 public:
   CameraNode(
-    const std::string & output = "camera", const std::string & node_name = "camera_node",
+    const std::string & node_name = "camera_node",
     int device = 0, int width = 320, int height = 240);
 
   virtual ~CameraNode();
@@ -33,7 +34,7 @@ public:
   void loop();
 
 private:
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_;
+  image_transport::CameraPublisher pub_cam;
   std::thread thread_;
   std::atomic<bool> canceled_;
 

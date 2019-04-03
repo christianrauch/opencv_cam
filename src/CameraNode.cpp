@@ -47,7 +47,7 @@ void set_now(builtin_interfaces::msg::Time & time)
 
 
 CameraNode::CameraNode(
-  const std::string & output, const std::string & node_name,
+  const std::string & node_name,
   int device, int width, int height)
 : Node(node_name, "camera", true),
   canceled_(false)
@@ -66,7 +66,8 @@ CameraNode::CameraNode(
     throw std::runtime_error("Could not open video stream!");
   }
   // Create a publisher on the output topic.
-  pub_ = this->create_publisher<sensor_msgs::msg::Image>(output, rmw_qos_profile_default);
+  pub_cam = image_transport::create_camera_publisher(this, "image", rmw_qos_profile_default);
+
   // Create the camera reading loop.
   thread_ = std::thread(std::bind(&CameraNode::loop, this));
 }
@@ -90,7 +91,7 @@ void CameraNode::loop()
       continue;
     }
     // Create a new unique_ptr to an Image message for storage.
-    sensor_msgs::msg::Image::UniquePtr msg(new sensor_msgs::msg::Image());
+    sensor_msgs::msg::Image::SharedPtr msg(new sensor_msgs::msg::Image());
 
     // Pack the OpenCV image into the ROS image.
     set_now(msg->header.stamp);
@@ -101,7 +102,10 @@ void CameraNode::loop()
     msg->is_bigendian = false;
     msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame_.step);
     msg->data.assign(frame_.datastart, frame_.dataend);
-    pub_->publish(msg);  // Publish.
+
+    sensor_msgs::msg::CameraInfo::SharedPtr ci(new sensor_msgs::msg::CameraInfo());
+
+    pub_cam.publish(msg, ci);
   }
 }
 
