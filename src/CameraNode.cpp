@@ -49,7 +49,7 @@ void set_now(builtin_interfaces::msg::Time & time)
 CameraNode::CameraNode(
   const std::string & output, const std::string & node_name,
   int device, int width, int height)
-: Node(node_name, "", true),
+: Node(node_name, "camera", true),
   canceled_(false)
 {
   // Initialize OpenCV
