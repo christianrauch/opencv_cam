@@ -34,18 +34,6 @@ mat_type2encoding(int mat_type)
   }
 }
 
-void set_now(builtin_interfaces::msg::Time & time)
-{
-  std::chrono::nanoseconds now = std::chrono::high_resolution_clock::now().time_since_epoch();
-  if (now <= std::chrono::nanoseconds(0)) {
-    time.sec = time.nanosec = 0;
-  } else {
-    time.sec = static_cast<builtin_interfaces::msg::Time::_sec_type>(now.count() / 1000000000);
-    time.nanosec = now.count() % 1000000000;
-  }
-}
-
-
 CameraNode::CameraNode(
   const std::string & node_name,
   int device, int width, int height)
@@ -67,6 +55,19 @@ CameraNode::CameraNode(
   }
   // Create a publisher on the output topic.
   pub_cam = image_transport::create_camera_publisher(this, "image", rmw_qos_profile_default);
+
+  ci_manager = std::make_unique<camera_info_manager::CameraInfoManager>(this);
+
+  std::string camera_info_url;
+  if(! (get_parameter<std::string>("camera_info_url", camera_info_url) &&
+        ci_manager->loadCameraInfo(camera_info_url)) )
+  {
+    // no configuration file provided or found, use default values
+    sensor_msgs::msg::CameraInfo ci;
+    ci.width = cap_.get(cv::CAP_PROP_FRAME_WIDTH);
+    ci.height = cap_.get(cv::CAP_PROP_FRAME_HEIGHT);
+    ci_manager->setCameraInfo(ci);
+  }
 
   // Create the camera reading loop.
   thread_ = std::thread(std::bind(&CameraNode::loop, this));
@@ -94,7 +95,7 @@ void CameraNode::loop()
     sensor_msgs::msg::Image::SharedPtr msg(new sensor_msgs::msg::Image());
 
     // Pack the OpenCV image into the ROS image.
-    set_now(msg->header.stamp);
+    msg->header.stamp = now();
     msg->header.frame_id = "camera_frame";
     msg->height = frame_.rows;
     msg->width = frame_.cols;
@@ -103,7 +104,8 @@ void CameraNode::loop()
     msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame_.step);
     msg->data.assign(frame_.datastart, frame_.dataend);
 
-    sensor_msgs::msg::CameraInfo::SharedPtr ci(new sensor_msgs::msg::CameraInfo());
+    sensor_msgs::msg::CameraInfo::SharedPtr ci(new sensor_msgs::msg::CameraInfo(ci_manager->getCameraInfo()));
+    ci->header = msg->header;
 
     pub_cam.publish(msg, ci);
   }

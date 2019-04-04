@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(camera_info_manager REQUIRED)
 find_package(OpenCV REQUIRED)
 
 include_directories(include)
@@ -33,6 +34,7 @@ ament_target_dependencies(
   "rclcpp"
   "sensor_msgs"
   "image_transport"
+  "camera_info_manager"
   "OpenCV"
 )
 install(TARGETS CameraNode

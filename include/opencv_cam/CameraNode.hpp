@@ -18,6 +18,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include <opencv2/videoio.hpp>
 #include <image_transport/image_transport.h>
+#include <camera_info_manager/camera_info_manager.h>
 
 
 // Node which captures images from a camera using OpenCV and publishes them.
@@ -35,6 +36,7 @@ public:
 
 private:
   image_transport::CameraPublisher pub_cam;
+  std::unique_ptr<camera_info_manager::CameraInfoManager> ci_manager;
   std::thread thread_;
   std::atomic<bool> canceled_;
 
