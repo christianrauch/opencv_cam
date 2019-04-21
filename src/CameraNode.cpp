@@ -35,9 +35,10 @@ mat_type2encoding(int mat_type)
 }
 
 CameraNode::CameraNode(
+  rclcpp::NodeOptions options,
   const std::string & node_name,
   int device, int width, int height)
-: Node(node_name, "camera", true),
+: Node(node_name, "camera", options.use_intra_process_comms(true)),
   canceled_(false)
 {
   // Initialize OpenCV
@@ -111,5 +112,5 @@ void CameraNode::loop()
   }
 }
 
-#include <class_loader/register_macro.hpp>
-CLASS_LOADER_REGISTER_CLASS(CameraNode, rclcpp::Node)
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(CameraNode)

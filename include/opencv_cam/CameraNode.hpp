@@ -27,6 +27,7 @@ class CameraNode : public rclcpp::Node
 {
 public:
   CameraNode(
+    const rclcpp::NodeOptions options = rclcpp::NodeOptions(),
     const std::string & node_name = "camera_node",
     int device = 0, int width = 320, int height = 240);
 

@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(camera_info_manager REQUIRED)
@@ -25,13 +26,15 @@ find_package(OpenCV REQUIRED)
 
 include_directories(include)
 
-add_library(CameraNode src/CameraNode.cpp)
+add_library(CameraNode SHARED src/CameraNode.cpp)
+rclcpp_components_register_nodes(CameraNode "CameraNode")
 target_include_directories(CameraNode PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(
   CameraNode
   "rclcpp"
+  "rclcpp_components"
   "sensor_msgs"
   "image_transport"
   "camera_info_manager"
