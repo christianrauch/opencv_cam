@@ -97,7 +97,7 @@ void CameraNode::loop()
 
     // Pack the OpenCV image into the ROS image.
     msg->header.stamp = now();
-    msg->header.frame_id = "camera_frame";
+    // msg->header.frame_id = "camera_frame";
     msg->height = frame_.rows;
     msg->width = frame_.cols;
     msg->encoding = mat_type2encoding(frame_.type());
@@ -107,6 +107,10 @@ void CameraNode::loop()
 
     sensor_msgs::msg::CameraInfo::SharedPtr ci(new sensor_msgs::msg::CameraInfo(ci_manager->getCameraInfo()));
     ci->header = msg->header;
+
+    std::stringstream ss;
+    ss << "cam ptr: " << (void*)msg->data.data();
+    msg->header.frame_id = ss.str();
 
     pub_cam.publish(msg, ci);
   }
