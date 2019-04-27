@@ -24,13 +24,9 @@ find_package(image_transport REQUIRED)
 find_package(camera_info_manager REQUIRED)
 find_package(OpenCV REQUIRED)
 
-include_directories(include)
-
 add_library(CameraNode SHARED src/CameraNode.cpp)
 rclcpp_components_register_nodes(CameraNode "CameraNode")
-target_include_directories(CameraNode PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+
 ament_target_dependencies(
   CameraNode
   "rclcpp"
@@ -44,12 +40,6 @@ install(TARGETS CameraNode
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
-
-add_executable(camera_node src/camera_node.cpp)
-target_link_libraries(camera_node CameraNode)
-install(TARGETS camera_node
-  EXPORT export_${PROJECT_NAME}
-  DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
