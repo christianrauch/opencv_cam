@@ -15,6 +15,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <cv_bridge/cv_bridge.h>
 #include <opencv2/videoio.hpp>
 #include <image_transport/image_transport.h>
 #include <camera_info_manager/camera_info_manager.h>
@@ -32,20 +33,25 @@ static const std::map<int, std::string> cv_encoding {
 class CameraNode : public rclcpp::Node
 {
 public:
-  CameraNode(
-    const rclcpp::NodeOptions options = rclcpp::NodeOptions(),
-    const int device = 0, const int width = 320, const int height = 240)
+  CameraNode(const rclcpp::NodeOptions options = rclcpp::NodeOptions())
   : Node("camera_node", rclcpp::NodeOptions(options).use_intra_process_comms(true)),
     canceled_(false)
   {
-    // Initialize OpenCV
-    cap_.open(device);
+    int device;
+    get_parameter_or<int>("device", device, 0);
+
+    int width, height;
+    get_parameter_or<int>("width", width, 320);
+    get_parameter_or<int>("height", height, 240);
+
+    cap_.open(device, cv::CAP_ANY);
     cap_.set(cv::CAP_PROP_FRAME_WIDTH, static_cast<double>(width));
     cap_.set(cv::CAP_PROP_FRAME_HEIGHT, static_cast<double>(height));
+
     if (!cap_.isOpened()) {
       throw std::runtime_error("Could not open video stream!");
     }
-    // Create a publisher on the output topic.
+
     pub_cam = image_transport::create_camera_publisher(this, "image", rmw_qos_profile_default);
 
     ci_manager = std::make_unique<camera_info_manager::CameraInfoManager>(this);
@@ -61,7 +67,6 @@ public:
       ci_manager->setCameraInfo(ci);
     }
 
-    // Create the camera reading loop.
     thread_ = std::thread(std::bind(&CameraNode::loop, this));
   }
 
@@ -76,28 +81,16 @@ public:
 
   void loop()
   {
-    // While running...
     while (rclcpp::ok() && !canceled_.load()) {
-      // Capture a frame from OpenCV.
       cap_ >> frame_;
-      if (frame_.empty()) {
-        continue;
-      }
-      // Create a new unique_ptr to an Image message for storage.
-      sensor_msgs::msg::Image::SharedPtr msg(new sensor_msgs::msg::Image());
 
-      // Pack the OpenCV image into the ROS image.
-      msg->header.stamp = now();
-      msg->header.frame_id = "camera_frame";
-      msg->height = frame_.rows;
-      msg->width = frame_.cols;
-      msg->encoding = cv_encoding.at(frame_.type());
-      msg->is_bigendian = false;
-      msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame_.step);
-      msg->data.assign(frame_.datastart, frame_.dataend);
+      if (frame_.empty()) { continue; }
 
       sensor_msgs::msg::CameraInfo::SharedPtr ci(new sensor_msgs::msg::CameraInfo(ci_manager->getCameraInfo()));
-      ci->header = msg->header;
+      ci->header.stamp = now();
+      ci->header.frame_id = "camera_frame";
+
+      sensor_msgs::msg::Image::SharedPtr msg = cv_bridge::CvImage(ci->header, cv_encoding.at(frame_.type()), frame_).toImageMsg();
 
       pub_cam.publish(msg, ci);
     }
