@@ -37,12 +37,16 @@ public:
   : Node("camera_node", rclcpp::NodeOptions(options).use_intra_process_comms(true)),
     canceled_(false)
   {
+    declare_parameter<int>("device", 0);
+    declare_parameter<int>("width", 320);
+    declare_parameter<int>("height", 240);
+
     int device;
-    get_parameter_or<int>("device", device, 0);
+    get_parameter<int>("device", device);
 
     int width, height;
-    get_parameter_or<int>("width", width, 320);
-    get_parameter_or<int>("height", height, 240);
+    get_parameter<int>("width", width);
+    get_parameter<int>("height", height);
 
     cap_.open(device, cv::CAP_ANY);
     cap_.set(cv::CAP_PROP_FRAME_WIDTH, static_cast<double>(width));
