@@ -3,7 +3,9 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
-    composable_node = ComposableNode(node_name='camera', package='opencv_cam', node_plugin='CameraNode')
+    composable_node = ComposableNode(node_name='camera',
+    package='opencv_cam', node_plugin='CameraNode',
+    parameters=[{"width": 640, "height": 480}])
     container = ComposableNodeContainer(
             node_name='camera_container',
             node_namespace='camera',
