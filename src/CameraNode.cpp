@@ -68,6 +68,7 @@ public:
       sensor_msgs::msg::CameraInfo ci;
       ci.width = cap_.get(cv::CAP_PROP_FRAME_WIDTH);
       ci.height = cap_.get(cv::CAP_PROP_FRAME_HEIGHT);
+      ci.k = {512, 0, ci.width/2.0, 0, 512, ci.height/2.0, 0, 0, 1};
       ci_manager->setCameraInfo(ci);
     }
 
